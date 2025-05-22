@@ -1,7 +1,7 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
-import pandas as pd
+
 
 GOOGLE_API_KEY = 'AIzaSyAAKSTCzAMtrhn-N74wiqbqnZD9GJqlyu4'
 
@@ -48,4 +48,4 @@ class Reasoning_Model():
 
 
 # model = Reasoning_Model()
-# print(model.generate_response('machine_depreciation', ['c0', 'c1']))
+# print(model.generate_response('machine_depreciation', [5, 6, 0, 1, 3, 18, 1, 0, 8, 1, 44, 38, 2, 196, 0, 3.56, 12.83, 161.5, 9, 0.07, 11.5, 31, 1.2, 0, 0]))

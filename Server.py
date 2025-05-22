@@ -8,14 +8,33 @@ from gtts import gTTS
 import uuid
 import os
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 import uvicorn
 
-FEATURE_NAMES = ['Cu', 'Fe', 'Cr', 'Al', 'Si', 'Pb', 'Sn', 'Ni', 'Na', 'B', 'P', 'Zn',
-                'Mo', 'Ca', 'Mg', 'TBN', 'V100', 'V40', 'OXI', 'TAN', 'water_flag', 'antifreeze_flag']
+
+origins = [
+    "http://localhost",
+    "http://localhost:8080", # If you're running your FlutterFlow web app locally
+    "https://faris-7o48hz.flutterflow.app/", # REPLACE with your actual FlutterFlow app's domain
+    "https://app.flutterflow.io", # FlutterFlow's development domain
+    "*" # FOR DEVELOPMENT ONLY: Allows all origins. REMOVE OR REPLACE FOR PRODUCTION!
+]
+
+
+OUTPUT_MAP = {''}
 
 faris = FARIS()
 FARIS_API = FastAPI()
+
+
+FARIS_API.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, PUT, DELETE, OPTIONS, etc.)
+    allow_headers=["*"],  # Allows all headers (Content-Type, Authorization, etc.)
+)
 
 
 class InputData(BaseModel):
@@ -26,37 +45,26 @@ def predict(data: InputData):
 
     if len(data.features) != 22:
         return {"error": "Exactly 22 features are required."}
-
-    # Convert to numpy array
-    X = pd.DataFrame(np.array(data.features).reshape(1, -1), columns=FEATURE_NAMES)
-
-    # Model prediction
-    output = faris.predict(X)
-    text1 = f"Prediction: {output[0]}"
-    text2 = "Thank you for using our model."
-
-    # Generate audio using gTTS
-    audio_text = f"{text1}. {text2}"
-    tts = gTTS(audio_text)
-    audio_filename = f"output_{uuid.uuid4()}.mp3"
-    tts.save(audio_filename)
+    
+    cls, reasoning, audio = faris.predict(data.features)
 
     return {
-        "cls": text1,
-        "reason": text2,
-        "audio_url": f"{audio_filename}"
+        "cls": cls,
+        "reason": reasoning,
+        "audio_url": f"{audio}"
     }
+
 
 @FARIS_API.get("/audio/{filename}")
 def get_audio(filename: str):
     file_path = filename
 
-    if not os.path.exists(file_path):
+    if not os.path.exists('audio/' + file_path):
         return {"error": "File not found"}
     
-    return FileResponse(path=file_path, media_type="audio/mpeg", filename=filename)
+    return FileResponse(path=file_path, media_type="audio/mpeg", filename='audio/' + file_path)
 
 
 
-if  __name__ == "__main__":
+if __name__ == "__main__":
     uvicorn.run(FARIS_API, host='127.0.0.1', port=8001)

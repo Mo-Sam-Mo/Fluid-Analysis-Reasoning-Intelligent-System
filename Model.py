@@ -2,6 +2,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 import joblib
 
+
 NUMERICAL_FEATS = ['Cu', 'Fe', 'Al', 'Si', 'Pb', 'Sn', 'Na', 'B', 'P', 'Zn', 'Mo',
                 'Ca', 'Mg', 'TBN', 'V100', 'V40', 'OXI', 'TAN', 'delta_visc_40',
                 'metal_sum', 'iron_to_copper_ratio']
@@ -11,8 +12,6 @@ YEO_PICKLE = 'PowerTransformer.pkl'
 DEEP_NET_WEIGHTS = 'DeepNet.keras'
 ENCODER_PICKLE = 'Encoders.pkl'
 SCALER_PICKLE = 'Scaler.pkl'
-
-NUMERICAL_FEATS = [0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
 
 class Classification_Model():
@@ -33,29 +32,10 @@ class Classification_Model():
         self.encoder = joblib.load(ENCODER_PICKLE)
 
 
-    def features_engineering(self, sample):
-
-        return sample
-
-
     def preproces_deep(self, sample):
-        if len(sample.shape) == 1:
-            sample = sample[None,:]
-
-        # feats eng
-
         sample = self.yeo.transform(sample)
         sample = self.encoder.transform(sample)
         sample[:, NUMERICAL_FEATS] = self.scaler.transofrm(sample[:, NUMERICAL_FEATS])
-
-        return sample
-
-
-    def preproces_tree(self, sample):
-        if len(sample.shape) == 1:
-            sample = sample[None,:]
-
-        # feats eng
 
         return sample
 
@@ -67,16 +47,13 @@ class Classification_Model():
 
     
     def classification(self, sample, model='DT'):
+
         if model == 'DT':
             # store the sample
-
-            sample = self.preproces_tree(sample)
-            return self.DescionTree.predict(sample)
-            
+            return self.DescionTree.predict(sample)[0]
         elif model == 'DN':
             # store the sample
-
             sample = self.preproces_deep(sample)
-            return self.DeepNet.predict(sample)
+            return self.DeepNet.predict(sample)[0]
         else:
             return 'Model Not Found'

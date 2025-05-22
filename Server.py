@@ -44,7 +44,7 @@ def predict(data: InputData):
     return {
         "cls": text1,
         "reason": text2,
-        "audio_url": f"/audio/{audio_filename}"
+        "audio_url": f"{audio_filename}"
     }
 
 @FARIS_API.get("/audio/{filename}")

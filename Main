@@ -1,0 +1,10 @@
+from Reasoning import Reasoning_Model
+
+
+
+class FARIS():
+    def __init__(self):
+        # self.OCR = 
+        # self.Model = 
+        self.Reasoning = Reasoning_Model()
+        

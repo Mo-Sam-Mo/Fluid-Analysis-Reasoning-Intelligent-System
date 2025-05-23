@@ -57,12 +57,12 @@ def predict(data: InputData):
 
 @FARIS_API.get("/audio/{filename}")
 def get_audio(filename: str):
-    file_path = filename
+    file_path = 'audio/' + filename
 
-    if not os.path.exists('audio/' + file_path):
+    if not os.path.exists(file_path):
         return {"error": "File not found"}
     
-    return FileResponse(path=file_path, media_type="audio/mpeg", filename='audio/' + file_path)
+    return FileResponse(path=file_path, media_type="audio/mpeg", filename=filename)
 
 
 

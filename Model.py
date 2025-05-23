@@ -7,11 +7,11 @@ NUMERICAL_FEATS = ['Cu', 'Fe', 'Al', 'Si', 'Pb', 'Sn', 'Na', 'B', 'P', 'Zn', 'Mo
                 'Ca', 'Mg', 'TBN', 'V100', 'V40', 'OXI', 'TAN', 'delta_visc_40',
                 'metal_sum', 'iron_to_copper_ratio']
 
-DESCTION_TREE_PICKLE = 'DecisionTreeModel.pkl'
-YEO_PICKLE = 'PowerTransformer.pkl'
-DEEP_NET_WEIGHTS = 'DeepNet.keras'
-ENCODER_PICKLE = 'Encoders.pkl'
-SCALER_PICKLE = 'Scaler.pkl'
+DESCTION_TREE_PICKLE = 'tools/DecisionTreeModel.pkl'
+YEO_PICKLE = 'tools/PowerTransformer.pkl'
+DEEP_NET_WEIGHTS = 'tools/DeepNet.keras'
+ENCODER_PICKLE = 'tools/Encoders.pkl'
+SCALER_PICKLE = 'tools/Scaler.pkl'
 
 
 class Classification_Model():

@@ -3,8 +3,7 @@ from Model import Classification_Model
 from Functions import enrich_and_reorder_features, sample_conversion, organize_report
 import pandas as pd
 import numpy as np
-from gtts import gTTS
-import uuid
+from Voice import TextToSpeach
 
 FEATURE_NAMES = ['Cu', 'Fe', 'Cr', 'Al', 'Si', 'Pb', 'Sn', 'Ni', 'Na', 'B', 'P', 'Zn',
                 'Mo', 'Ca', 'Mg', 'TBN', 'V100', 'V40', 'OXI', 'TAN', 'water_flag', 'antifreeze_flag']
@@ -15,6 +14,7 @@ class FARIS():
         # self.OCR = 
         self.Model = Classification_Model()
         self.Reasoning = Reasoning_Model()
+        self.Voice = TextToSpeach()
 
     def predict(self, sample):
         X = pd.DataFrame(np.array(sample).reshape(1, -1), columns=FEATURE_NAMES)
@@ -25,12 +25,7 @@ class FARIS():
         cls = self.Model.classification(X)
         reasoning = self.Reasoning.generate_response(cls, txt_sample)
         reasoning, voice = organize_report(reasoning)
+        audio_filename = self.Voice.speach(voice)
 
-        #prepare the reasoning shape
-        tts = gTTS(voice)
-        audio_filename = f"audio/output_{uuid.uuid4()}.mp3"
-        tts.save(audio_filename)
-
-        #make the voice
         return cls, reasoning, audio_filename
         

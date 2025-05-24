@@ -1,20 +1,22 @@
 import os
 import time
-import numpy as np
+import base64
 import pandas as pd
 from PIL import Image
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-from Main import FARIS
+from Reasoning import Reasoning_Model
 from plotly.subplots import make_subplots
+import pickle
+import gspread
+import requests
+from oauth2client.service_account import ServiceAccountCredentials
+from Reasoning import Reasoning_Model
+from Main import FARIS
+
 
 faris = FARIS()
-
-if "play_audio" not in st.session_state:
-    st.session_state.play_audio = False
-if "audio_path" not in st.session_state:
-    st.session_state.audio_path = None
 
 
 # ----- Functions -----
@@ -103,16 +105,10 @@ def apply_plot_effects(fig):
     )
     return fig
 
-def play_audio_placeholder(audio_path):
+def play_audio_placeholder():
     with st.spinner('🔊 FARIS is analyzing your sample...'):
         time.sleep(2)
-
-    st.success("Analysis complete! Playing audio now...")
-    
-    # Play audio
-    audio_file = open(audio_path, 'rb')
-    audio_bytes = audio_file.read()
-    st.audio(audio_bytes, format='audio/mp3')
+        st.success("Analysis complete! (Audio placeholder - would play insights.mp3 in production)")
 
 # ----- Page Config -----
 st.set_page_config(
@@ -228,7 +224,7 @@ def dashboard_page():
         if st.button("🔍 Explore Full Analysis", use_container_width=True):
             st.session_state.page = "analysis"
     with col2:
-        if st.button("🛠️ Sample Diagnostics", use_container_width=True):
+        if st.button("🛠️ Equipment Diagnostics", use_container_width=True):
             st.session_state.page = "diagnostics"
 
 # ----- Page 2: Analysis -----
@@ -265,8 +261,7 @@ def analysis_page():
             particle_size = st.select_slider(
                 "Particle Size Range (µm):",
                 options=sorted(df['particle_size'].unique()),
-                value=(min(df['particle_size']), max(df['particle_size']))
-            )
+                value=(min(df['particle_size']), max(df['particle_size'])))
         
         # Add some visual flair
         st.markdown("---")
@@ -274,7 +269,8 @@ def analysis_page():
     
     # Apply filters
     df = df[df["label"].isin(selected_labels)]
-    df = df[(df['delta_visc_40'] >= delta_visc_40_range[0]) & (df['delta_visc_40'] <= delta_visc_40_range[1])]
+    df = df[(df['delta_visc_40'] >= delta_visc_40_range[0]) & 
+            (df['delta_visc_40'] <= delta_visc_40_range[1])]
     
     # Interactive visualizations
     st.subheader("📊 Interactive Data Explorer")
@@ -324,133 +320,134 @@ def analysis_page():
 
 # ----- Page 3: Diagnostics -----
 def diagnostics_page():
-    st.title("🛠️ FARIS Sample Diagnostics")
+    st.title("🔍 Equipment Failure Prediction Dashboard")
+    st.markdown("This app predicts equipment failure class using either manual inputs or image-based oil analysis.")
     
-    # Load data for reference values
-    df = load_data()
+    # --- Reset button ---
+    if st.button("🔁 Reset Inputs"):
+        for key in list(st.session_state.keys()):
+            if key not in ['page', 'input_mode']:
+                del st.session_state[key]
+        st.experimental_rerun()
     
-    # Input options
-    input_method = st.radio(
-        "How would you like to provide the sample?",
-        ["Enter values manually", "Upload lab report image"],
-        horizontal=True
-    )
     
-    if input_method == "Enter values manually":
-        with st.form("sample_form"):
-            st.subheader("Sample Parameters")
-            
-            # Define feature names
-            FEATURE_NAMES = ['Cu', 'Fe', 'Cr', 'Al', 'Si', 'Pb', 'Sn', 'Ni', 'Na', 'B', 'P', 'Zn',
-                           'Mo', 'Ca', 'Mg', 'TBN', 'V100', 'V40', 'OXI', 'TAN', 'water_flag', 'antifreeze_flag']
-            
-            # Organize into two columns for better layout
+    # --- Input Columns ---
+    input_columns = [
+        'Cu', 'Fe', 'Cr', 'Al', 'Si', 'Pb', 'Sn', 'Ni', 'Na', 'B',
+        'P', 'Zn', 'Mo', 'Ca', 'Mg', 'TBN', 'V100', 'V40',
+        'OXI', 'TAN', 'water_flag', 'antifreeze_flag'
+    ]
+    
+    # --- Input Mode Selection ---
+    if "input_mode" not in st.session_state:
+        st.session_state.input_mode = "📝 Manual Entry"
+    input_mode = st.radio("Choose Input Mode", ["📝 Manual Entry", "📷 Upload Image"],
+                          index=["📝 Manual Entry", "📷 Upload Image"].index(st.session_state.input_mode),
+                          horizontal=True)
+    st.session_state.input_mode = input_mode
+    
+    # --- Input Data Placeholder ---
+    if "input_data" not in st.session_state:
+        st.session_state.input_data = None
+    
+# --- Manual Entry ---
+    if input_mode == "📝 Manual Entry":
+        with st.form("manual_form"):
             col1, col2 = st.columns(2)
             
             with col1:
-                # Metal content (ppm)
-                st.markdown("### Metal Content (ppm)")
-                metal_features = ['Cu', 'Fe', 'Cr', 'Al', 'Si', 'Pb', 'Sn', 'Ni', 'Na']
-                metal_values = {}
-                for feature in metal_features:
-                    metal_values[feature] = st.number_input(
-                        f"{feature} (ppm)",
-                        min_value=0.0,
-                        value=0.0,
-                        step=0.1,
-                        key=f"metal_{feature}"
-                    )
-                
-                # Viscosity and other physical properties
-                st.markdown("### Physical Properties")
-                V100 = st.number_input("V100 (cSt)", min_value=0.0, value=10.5)
-                V40 = st.number_input("V40 (cSt)", min_value=0.0, value=45.2)
-            
+                st.markdown("### 🧪 Metal Content (ppm)")
+                Cu = st.number_input("Copper (Cu)", 0.0, 100.0, 5.0)
+                Fe = st.number_input("Iron (Fe)", 0.0, 100.0, 6.0)
+                Cr = st.number_input("Chromium (Cr)", 0.0, 100.0, 0.0)
+                Al = st.number_input("Aluminum (Al)", 0.0, 100.0, 1.0)
+                Si = st.number_input("Silicon (Si)", 0.0, 100.0, 3.0)
+                Pb = st.number_input("Lead (Pb)", 0.0, 100.0, 18.0)
+                Sn = st.number_input("Tin (Sn)", 0.0, 100.0, 1.0)
+                Ni = st.number_input("Nickel (Ni)", 0.0, 100.0, 0.0)
+                Na = st.number_input("Sodium (Na)", 0.0, 100.0, 8.0)
+
+                st.markdown("### 🧫 Physical Properties")
+                V100 = st.number_input("Viscosity at 100°C (V100, cSt)", 0.0, 100.0, 10.0)
+                V40 = st.number_input("Viscosity at 40°C (V40, cSt)", 0.0, 200.0, 150.0)
+
             with col2:
-                # Additives and other elements
-                st.markdown("### Additives and Elements")
-                additive_features = ['B', 'P', 'Zn', 'Mo', 'Ca', 'Mg']
-                additive_values = {}
-                for feature in additive_features:
-                    additive_values[feature] = st.number_input(
-                        f"{feature} (ppm)",
-                        min_value=0.0,
-                        value=0.0,
-                        step=0.1,
-                        key=f"additive_{feature}"
-                    )
-                
-                # Chemical properties
-                st.markdown("### Chemical Properties")
-                TBN = st.number_input("TBN (mg KOH/g)", min_value=0.0, value=6.5)
-                OXI = st.number_input("OXI (Abs/cm)", min_value=0.0, value=0.25)
-                TAN = st.number_input("TAN (mg KOH/g)", min_value=0.0, value=1.2)
-                
-                # Flags
-                st.markdown("### Contamination Flags")
-                water_flag = st.checkbox("Water Contamination")
-                antifreeze_flag = st.checkbox("Antifreeze Contamination")
-            
-            submitted = st.form_submit_button("Analyze Sample")
-            
-        if submitted:
-            # Prepare the sample data
-            sample_data = list(metal_values.values()) + list(additive_values.values()) + [V100, V40, TBN, OXI, TAN, int(water_flag), int(antifreeze_flag)]                
-            
-            with st.spinner("🔬 Analyzing sample..."):
-                time.sleep(2)
-                cls, reasoning, audio = faris.predict(sample_data)
+                st.markdown("### 🧪 Additives and Elements (ppm)")
+                B = st.number_input("Boron (B)", 0.0, 100.0, 1.0)
+                P = st.number_input("Phosphorus (P)", 0.0, 100.0, 15.0)
+                Zn = st.number_input("Zinc (Zn)", 0.0, 100.0, 15.0)
+                Mo = st.number_input("Molybdenum (Mo)", 0.0, 100.0, 0.0)
+                Ca = st.number_input("Calcium (Ca)", 0.0, 500.0, 256.0)
+                Mg = st.number_input("Magnesium (Mg)", 0.0, 100.0, 0.0)
 
-                st.success("Analysis Complete!")
-                st.markdown(f"### Diagnosis: **{cls}**")
-                st.markdown(f"#### Reason: {reasoning}")
+                st.markdown("### 🔬 Chemical Properties")
+                TBN = st.number_input("Total Base Number (TBN, mg KOH/g)", 0.0, 10.0, 8.5)
+                OXI = st.number_input("Oxidation (OXI, Abs/cm)", 0.0, 100.0, 0.0)
+                TAN = st.number_input("Total Acid Number (TAN, mg KOH/g)", 0.0, 2.0, 0.04)
 
-                
+                st.markdown("### ⚠️ Contamination Flags")
+                water_flag = st.checkbox("Water Present?", value=True)
+                antifreeze_flag = st.checkbox("Antifreeze Present?", value=False)
 
+            submit_manual = st.form_submit_button("🔍 Predict")
 
-            # OUTSIDE the form, still inside the "Enter values manually" branch
-            if st.session_state.play_audio and st.session_state.audio_path:
-                if st.button("🗣️ Ask FARIS for More Insights", help="Get detailed audio explanation", use_container_width=True):
-                    play_audio_placeholder('audio/' + audio)
+            if submit_manual:
+                st.session_state.input_data = [
+                    Cu, Fe, Cr, Al, Si, Pb, Sn, Ni, Na, B, P, Zn, Mo, Ca, Mg,
+                    TBN, V100, V40, OXI, TAN, 
+                    int(water_flag), int(antifreeze_flag)
+                ]
 
-    else:  # Upload lab report image
-        uploaded_file = st.file_uploader("Upload Lab Report Image", type=["jpg", "png", "jpeg"])
-        
-        if uploaded_file is not None:
-            # Display the uploaded image
-            st.image(uploaded_file, caption="Uploaded Lab Report", width=300)
-            
-            if st.button("Analyze Report", use_container_width=True):
-                # Simulate image analysis
-                with st.spinner("👁️ Reading lab report..."):
-                    time.sleep(3)
-                    
-                    # Mock results from image analysis
-                    diagnosis = "Normal Wear with Slight Contamination"
-                    reason = """The report indicates normal wear metals but shows elevated silicon levels,
-                    suggesting possible dirt contamination. The viscosity parameters are within normal range."""
-                    
-                    st.success("Report Analysis Complete!")
-                    st.markdown(f"### Diagnosis: **{diagnosis}**")
-                    st.markdown(f"#### Reason: {reason}")
-                    
-                    # Ask FARIS button
-                    st.markdown("---")
-                    if st.button("🗣️ Ask FARIS for More Insights", 
-                                help="Get detailed audio explanation",
-                                use_container_width=True):
-                        play_audio_placeholder()
     
-    # Back button
-    if st.button("← Back to Dashboard", type="secondary"):
-        st.session_state.page = "dashboard"
+    # --- Upload Image Mode (To be added later) ---
+    elif input_mode == "📷 Upload Image":
+        st.info("📷 Image mode will be supported soon. Stay tuned!")
+    
+    # --- Prediction Section ---
+    if st.session_state.input_data is not None:
+        input_data = st.session_state.input_data
+
+        prediction, reasoning_text, audio_file_path = faris.predict(input_data)
+
+        
+        st.success(f"🔧 Predicted Failure Class: *{prediction}*")
+    
+        # Save to Google Sheets
+        try:
+            scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+            creds_dict = st.secrets["gcp_service_account"]
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+            sheet = gspread.authorize(creds).open("Equipment_Predictions").sheet1
+            row = input_data + [prediction]
+            sheet.append_row(row)
+            st.info("✅ Saved to Google Sheet.")
+        except Exception as e:
+            st.warning(f"⚠ Could not save to Google Sheet: {e}")
+    
+        # 🧠 LLM Reasoning
+        try:
+            st.markdown("### 💬 LLM Reasoning")
+            st.info(reasoning_text)
+        except Exception as e:
+            st.warning(f"⚠ Could not generate reasoning: {e}")
+    
+        # 🔊 Audio Explanation
+        if st.button("🎧 Listen to Reasoning"):
+            try:
+                with open('audio/' + audio_file_path, "rb") as audio_file:
+                    st.audio(audio_file.read(), format="audio/mp3")
+            except Exception as e:
+                st.error(f"❌ Audio Error: {e}")
+            
+            # Back button
+            if st.button("← Back to Dashboard", type="secondary"):
+                st.session_state.page = "dashboard"
 
 # ----- Main App -----
 def main():
     # Initialize session state
     if "page" not in st.session_state:
         st.session_state.page = "dashboard"
-    
     # Page navigation
     if st.session_state.page == "dashboard":
         dashboard_page()

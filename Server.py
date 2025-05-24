@@ -45,7 +45,7 @@ def predict(data: InputData):
 
     return {
         "cls": cls,
-        "reason": reasoning,
+        "reason": reasoning.replace("*", ""),
         "audio_url": f"{audio}"
     }
 

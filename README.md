@@ -27,22 +27,24 @@
 
 ## 📦 Installation
 
-> ⚠️ **Placeholder**
-> Installation instructions will be provided soon. This will include steps to set up a virtual environment, install dependencies, and download necessary model weights.
-
----
-
-## ⚙️ Usage
-
-> ⚠️ **Placeholder**
-> Example usage will be documented once the pipeline is finalized.
-
 ```bash
-# Example usage (to be updated)
-python run_pipeline.py --input sample_report.jpg
+# 1. Clone the repository
+git clone https://github.com/Mo-Sam-Mo/Fluid-Analysis-Reasoning-Intelligent-System.git
+cd Fluid-Analysis-Reasoning-Intelligent-System
+
+# 2. (Optional) Create a virtual environment
+python -m venv venv
+venv/Scripts/activate  # On Windows use `venv\Scripts\activate`
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Start you app
+streamlit run StreamlitDeploy.py
 ```
 
 ---
+
 
 ## 🧠 System Pipeline Overview
 
@@ -54,13 +56,6 @@ python run_pipeline.py --input sample_report.jpg
 
 ---
 
-## 🧪 Testing & Evaluation
-
-> ⚠️ **Placeholder**
-> Evaluation metrics and testing framework to be added later.
-
----
-
 ## 📄 License
 
 This project is licensed under the [Apache 2.0 License](LICENSE).
@@ -69,11 +64,11 @@ This project is licensed under the [Apache 2.0 License](LICENSE).
 
 ## 👥 Contributors
 
-* **Mohamed Samir** *(Lead Developer)*
-* Omar Mahmoud
-* Ahmed Halim
-* Roaa Shehab
-* Abdelrahman Bakeer
+* [Mohamed Samir](https://github.com/Mo-Sam-Mo)
+* [Omar Mahmoud](https://github.com/OmarGira)
+* [Ahmed Halim](https://github.com/Ahmed-M-Halim)
+* [Roaa Shehab](https://github.com/Roaa1932002)
+* [Abdelrahman Bakeer](https://github.com/A-Bakeer)
 
 ---
 
@@ -81,24 +76,7 @@ This project is licensed under the [Apache 2.0 License](LICENSE).
 
 * Add support for multilingual OCR (e.g., Arabic, French)
 * Implement real-time processing capabilities
-* Build interactive dashboard with Streamlit
-* Export final analysis as PDF/HTML reports
 * Add more advanced reasoning using LLMs
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome!
-If you'd like to improve the project, please:
-
-1. Fork the repository
-2. Create a new branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m 'Add your feature'`)
-4. Push to the branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
-
-For major changes, please open an issue first to discuss what you'd like to change.
 
 ---
 

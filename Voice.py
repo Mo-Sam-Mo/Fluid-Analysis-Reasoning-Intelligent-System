@@ -3,10 +3,9 @@ import uuid
 
 MODELS_URL = "https://api.elevenlabs.io/v1/models"
 
-
 class TextToSpeach():
 
-    def __init__(self, actor='kdmDKE6EkgrWrrykO9Qt', api='sk_245d0fc9c0be4f7fd231d9cea6413ce979daa6f43a3d2fee'):
+    def __init__(self, actor='kdmDKE6EkgrWrrykO9Qt', api='sk_37c77b64acacc5b7bd898449cb1a05210f5ddfe634a81bce'):
         self.actor = f"https://api.elevenlabs.io/v1/text-to-speech/{actor}"
         self.api_key = api
 

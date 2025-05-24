@@ -1,3 +1,4 @@
 FarisEnv/
-audio/
 *.mp3
+__pycache__/
+temp/

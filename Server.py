@@ -1,11 +1,6 @@
-import io
 from pydantic import BaseModel
 from typing import List
-import numpy as np
-import pandas as pd
 from Main import FARIS
-from gtts import gTTS
-import uuid
 import os
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware

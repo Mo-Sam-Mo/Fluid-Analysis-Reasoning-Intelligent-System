@@ -19,7 +19,7 @@ def enrich_and_reorder_features(X):
 
     # Compute additional features
     delta_visc_40 = v40 - VISCOSITY_SPEC_40
-    fe_cu_ratio = fe / cu if cu != 0 else np.inf
+    fe_cu_ratio = fe / cu if cu != 0 else 0
     metal_sum = X.loc[:, METAL_COLS].sum(axis=1).iloc[0]
 
     # Add new features

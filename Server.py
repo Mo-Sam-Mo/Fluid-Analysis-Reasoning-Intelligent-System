@@ -16,8 +16,14 @@ origins = [
     "*" # FOR DEVELOPMENT ONLY: Allows all origins. REMOVE OR REPLACE FOR PRODUCTION!
 ]
 
-
-OUTPUT_MAP = {''}
+CLASS_MAPPING = {
+            'machine_depreciation': 'Machine Deperciation',
+            'water_contamination': 'Water Contamination',
+            'dirt_in_oil': 'Dirt in Oil',
+            'sludge_formation': 'Sludge Formation',
+            'oil_change_needed': 'Oil Consumed',
+            'normal': 'Normal'
+        }
 
 faris = FARIS()
 FARIS_API = FastAPI()
@@ -44,7 +50,7 @@ def predict(data: InputData):
     cls, reasoning, audio = faris.predict(data.features)
 
     return {
-        "cls": cls,
+        "cls": CLASS_MAPPING[cls],
         "reason": reasoning.replace("*", ""),
         "audio_url": f"{audio}"
     }

@@ -15,8 +15,9 @@ from oauth2client.service_account import ServiceAccountCredentials
 from Reasoning import Reasoning_Model
 from Main import FARIS
 
-
 faris = FARIS()
+
+
 
 
 # ----- Functions -----
@@ -24,6 +25,9 @@ faris = FARIS()
 def load_data():
     df = pd.read_csv("cleaned_synthetic_oil_data.csv")
     return df
+
+if "df" not in st.session_state:
+    st.session_state.df = load_data()
 
 def plot_feature_distribution(df, feature_col, target_col):
     fig = px.histogram(
@@ -420,9 +424,59 @@ def diagnostics_page():
             sheet = gspread.authorize(creds).open("Equipment_Predictions").sheet1
             row = input_data + [prediction]
             sheet.append_row(row)
-            st.info("✅ Saved to Google Sheet.")
+            st.info("✅ Saved to Data Base.")
         except Exception as e:
             st.warning(f"⚠ Could not save to Google Sheet: {e}")
+
+        class_features = {
+            'machine_depreciation': ['Pb', 'Zn', 'V40', 'TBN', 'TAN'],
+            'water_contamination': ['Na', 'Pb', 'Zn', 'TBN'],
+            'dirt_in_oil': ['Si', 'B', 'Cu', 'Pb'],
+            'sludge_formation': ['TAN', 'OXI', 'TBN', 'Na'],
+            'oil_change_needed': ['Zn', 'Pb', 'TAN', 'Na', 'Si', 'TBN'],
+            'normal': []
+        }
+
+        if prediction != 'normal':
+            df = st.session_state.df
+            st.subheader(f"Visual Diagnostic for {prediction}")
+            st.markdown(f"### Feature Distribution Comparison (Normal vs {prediction})")
+
+            features = class_features[prediction]
+
+            for feature in features:
+                try:
+                    # Violin Plot
+                    fig_violin = go.Figure()
+
+                    fig_violin.add_trace(go.Violin(
+                        y=df[df['label'] == 'normal'][feature],
+                        name='Normal',
+                        line_color='green',
+                        box_visible=True,
+                        meanline_visible=True
+                    ))
+
+                    fig_violin.add_trace(go.Violin(
+                        y=df[df['label'] == prediction][feature],
+                        name=prediction,
+                        line_color='red',
+                        box_visible=True,
+                        meanline_visible=True
+                    ))
+
+                    fig_violin.update_layout(
+                        title=f"Violin Plot: {feature}",
+                        yaxis_title=feature,
+                        height=400,
+                        margin=dict(t=60)
+                    )
+                    st.plotly_chart(fig_violin, use_container_width=True)
+
+                except Exception as e:
+                    st.warning(f"Could not plot {feature}: {e}")
+        else:
+            st.success("Machine condition is normal. No visualization required.")
     
         # 🧠 LLM Reasoning
         try:

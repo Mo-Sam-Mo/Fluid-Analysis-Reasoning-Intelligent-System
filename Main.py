@@ -8,6 +8,15 @@ from Voice import TextToSpeach
 FEATURE_NAMES = ['Cu', 'Fe', 'Cr', 'Al', 'Si', 'Pb', 'Sn', 'Ni', 'Na', 'B', 'P', 'Zn',
                 'Mo', 'Ca', 'Mg', 'TBN', 'V100', 'V40', 'OXI', 'TAN', 'water_flag', 'antifreeze_flag']
 
+CLASS_MAPPING = {
+    'machine_depreciation': 'machine Depreciation',
+    'water_contamination': ['Na', 'Pb', 'Zn', 'TBN'],
+    'dirt_in_oil': ['Si', 'B', 'Cu', 'Pb'],
+    'sludge_formation': ['TAN', 'OXI', 'TBN', 'Na'],
+    'oil_change_needed': ['Zn', 'Pb', 'TAN', 'Na', 'Si', 'TBN'],
+    'normal': []
+}
+
 
 class FARIS():
     def __init__(self):

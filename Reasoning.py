@@ -3,7 +3,7 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
 
-GOOGLE_API_KEY = 'AIzaSyAAKSTCzAMtrhn-N74wiqbqnZD9GJqlyu4'
+GOOGLE_API_KEY = 'Your API Key'
 
 
 RETRIVAL_DOC = {'machine_depreciation': "Indicators:\n•	High levels of wear metals: Fe, Pb, Cu, Sn, Cr, Al\n•	Fe > 30 ppm → gear wear\n•	Pb > 30 ppm → bearing overlay wear\n•	Cu/Sn > 20/10 ppm → bushing wear\n•	Cr/Al > 5–10 ppm → piston ring/liner damage\nCauses:\n•	Poor lubrication (oil degradation or wrong viscosity)\n•	Misalignment or overloading\n•	Extended oil drain intervals\n•	Contamination by hard particles or coolant\nSolutions:\n•	Reduce oil drain interval or use condition-based oil change\n•	Use higher-grade anti-wear or EP (extreme pressure) oil\n•	Inspect and replace worn components (bearings, bushings)\n•	Monitor wear rate over time to distinguish break-in vs. failure",

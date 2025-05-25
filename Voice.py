@@ -5,7 +5,7 @@ MODELS_URL = "https://api.elevenlabs.io/v1/models"
 
 class TextToSpeach():
 
-    def __init__(self, actor='kdmDKE6EkgrWrrykO9Qt', api='sk_37c77b64acacc5b7bd898449cb1a05210f5ddfe634a81bce'):
+    def __init__(self, actor='kdmDKE6EkgrWrrykO9Qt', api='Your API Key'):
         self.actor = f"https://api.elevenlabs.io/v1/text-to-speech/{actor}"
         self.api_key = api
 

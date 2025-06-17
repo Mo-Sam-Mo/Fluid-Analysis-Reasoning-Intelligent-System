@@ -1,0 +1,6 @@
+FarisEnv/
+__pycache__/
+.env
+Weights/
+*.mp3
+Secrets.py

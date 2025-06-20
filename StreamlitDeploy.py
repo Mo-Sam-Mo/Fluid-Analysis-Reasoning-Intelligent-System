@@ -8,14 +8,47 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from Main import FARIS
 
+# Sample data
+data_vis = {
+    "label": [
+        "dirt_in_oil", "dirt_in_oil", "dirt_in_oil", "dirt_in_oil", "dirt_in_oil", "dirt_in_oil", "dirt_in_oil",
+        "machine_depreciation",  "machine_depreciation", "machine_depreciation",
+        "machine_depreciation", "machine_depreciation", "machine_depreciation", "machine_depreciation",
+        "oil_change_needed", "oil_change_needed", "oil_change_needed", "oil_change_needed",
+        "sludge_formation", "sludge_formation", "sludge_formation", "sludge_formation", "sludge_formation",
+        "water_contamination", "water_contamination",
+        "water_contamination", "water_contamination", "water_contamination"
+    ],
+    "feature": [
+        "delta_visc_40", "Si", "antifreeze_flag", "B", "TBN", "Zn", "Ni",
+        "delta_visc_40", "Pb", "metal_sum", "Cr", "Zn", "TBN", "Si",
+        "delta_visc_40", "Zn", "TBN", "antifreeze_flag",
+        "delta_visc_40", "TBN", "TAN", "antifreeze_flag", "Zn",
+        "delta_visc_40", "Na", "Zn", "TBN", "Cr"
+    ],
+    "difference_percent": [
+        581.77, 222.76, 110.33, -33.91, -15.39, -15.01, -11.16,
+        401.51, 63.55, 31.99, 18.59, -17.36, -10.87, -10.02,
+        805.91, -31.12, -19.92, 17.16,
+        1715.08, -49.29, 40.08, -29.30, -18.37,
+        465.71, 53.92, -16.58, -15.54, 12.68
+    ]
+}
+
+# Prepare DataFrame
+df_vis = pd.DataFrame(data_vis)
+df_vis["direction"] = df_vis["difference_percent"].apply(lambda x: "Higher" if x > 0 else "Lower")
+
+# Get unique labels for columns
+labels_vis = df_vis["label"].unique()
 faris = FARIS()
 
 # ----- Page Config -----
-st.set_page_config(
-    page_title="🛢️ FARIS Fluid Analysis",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# st.set_page_config(
+#     page_title="🛢️ FARIS Fluid Analysis",
+#     layout="wide",
+#     initial_sidebar_state="expanded"
+# )
 
 # ----- Functions -----
 def apply_plot_effects(fig):
@@ -224,18 +257,33 @@ def dashboard_page():
     
     # Mini visualizations
     st.subheader("📈 Quick Insights")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        fig = px.pie(df, names='label', title='Diagnosis Distribution')
-        fig = apply_plot_effects(fig)
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        fig = px.histogram(df, x='delta_visc_40', nbins=20, title='delta_visc_40 Distribution')
-        fig = apply_plot_effects(fig)
-        st.plotly_chart(fig, use_container_width=True)
-    
+
+    # Create 5 Streamlit columns
+    cols = st.columns(5)
+
+    # Loop over each label and display its plot in one of the 5 columns
+    for i, label in enumerate(labels_vis):
+        sub_df_vis = df_vis[df_vis["label"] == label].sort_values("difference_percent", ascending=True)
+        
+        fig = px.bar(
+            sub_df_vis,
+            x="difference_percent",
+            y="feature",
+            color="direction",
+            orientation="h",
+            text="difference_percent",
+            labels={"difference_percent": "Deviation (%)"},
+            title=label.replace("_", " ").title()
+        )
+        
+        fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+        fig.update_layout(
+            height=400,
+            margin=dict(l=20, r=20, t=40, b=20),
+            showlegend=False
+        )
+        
+        cols[i % 5].plotly_chart(fig, use_container_width=True)
     # Navigation buttons
     st.markdown("---")
     col1, col2 = st.columns(2)

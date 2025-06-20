@@ -18,6 +18,24 @@ st.set_page_config(
 )
 
 # ----- Functions -----
+def apply_plot_effects(fig):
+    """Applies theme effects to Plotly charts based on dark_mode state."""
+    is_dark = st.session_state.get("dark_mode", False)
+
+    fig.update_layout(
+        hovermode="x unified",
+        hoverlabel=dict(font_size=14),
+        plot_bgcolor="rgba(0,0,0,0)" if is_dark else "white",
+        paper_bgcolor="rgba(30,30,30,1)" if is_dark else "white",
+        font=dict(color="#eaeaea" if is_dark else "#000000"),
+        xaxis=dict(showgrid=False, color="#eaeaea" if is_dark else "#000000"),
+        yaxis=dict(showgrid=False, color="#eaeaea" if is_dark else "#000000"),
+        title_font=dict(color="#1abc9c" if is_dark else "#1abc9c"),
+        transition={'duration': 500},
+    )
+    return fig
+
+
 @st.cache_data
 def load_data():
     df = pd.read_csv("Weights/oil_data.csv")
@@ -69,7 +87,9 @@ def plot_feature_distribution(df, feature_col, target_col):
     
     return fig
 
-def create_interactive_kpi(value, label, delta=None):
+def create_interactive_kpi(value, label, delta=None, hover_text=None):
+    """Creates an interactive KPI block with hover animation and optional tooltip."""
+    tooltip = f' title="{hover_text}"' if hover_text else ""
     kpi_html = f"""
     <div style="
         padding: 20px;
@@ -80,9 +100,11 @@ def create_interactive_kpi(value, label, delta=None):
         margin: 10px;
         text-align: center;
         color: white;
+        cursor: pointer;
     "
-    onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.3)';"
-    onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)';">
+    onmouseover="this.style.transform='scale(1.07)'; this.style.boxShadow='0 12px 20px rgba(0,0,0,0.4)';"
+    onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)';"
+    {tooltip}>
         <h2 style="margin: 0; font-size: 2.5rem; color: #1abc9c">{value}</h2>
         <p style="margin: 5px 0 0; font-size: 1rem">{label}</p>
         {f'<p style="margin: 5px 0 0; font-size: 0.8rem; color: {"#2ecc71" if delta >= 0 else "#e74c3c"}">{delta:+}%</p>' if delta is not None else ''}
@@ -169,33 +191,36 @@ def dashboard_page():
     
     with cols[0]:
         st.markdown(create_interactive_kpi(
-            len(df), 
-            "Total Samples", 
-            delta=2.5
-        ), unsafe_allow_html=True)
-    
+        len(df), 
+        "Total Samples", 
+        delta=2.5,
+        hover_text="Number of oil samples analyzed"
+    ), unsafe_allow_html=True)
+
     with cols[1]:
         st.markdown(create_interactive_kpi(
-            df["label"].nunique(), 
+            df["label"].nunique(),
             "Unique Diagnoses",
-            delta=1.8
+            delta=1.8,
+            hover_text="Distinct labels found in dataset"
         ), unsafe_allow_html=True)
-    
+
     with cols[2]:
         st.markdown(create_interactive_kpi(
-            df.shape[1] - 1, 
+            df.shape[1] - 1,
             "Features Analyzed",
-            delta=3.2
+            delta=3.2,
+            hover_text="Number of features (columns) used for analysis"
         ), unsafe_allow_html=True)
-    
+
     with cols[3]:
         st.markdown(create_interactive_kpi(
-            f"{df['delta_visc_40'].mean():.1f}", 
+            f"{df['delta_visc_40'].mean():.1f}",
             "Avg delta_visc_40 (cSt)",
-            delta=-0.5
+            delta=-0.5,
+            hover_text="Average change in viscosity across samples"
         ), unsafe_allow_html=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+
     
     # Mini visualizations
     st.subheader("📈 Quick Insights")
